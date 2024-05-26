@@ -1,4 +1,5 @@
 use compact_str::CompactString;
+use unicode_width::UnicodeWidthStr;
 
 use crate::prelude::*;
 
@@ -31,6 +32,11 @@ pub struct Cell {
 
     /// Whether the cell should be skipped when copying (diffing) the buffer to the screen.
     pub skip: bool,
+
+    /// A 'trusted' display width of this symbol when printed to the string. This can mostly be
+    /// used to avoid expensive `unicode_width` computations when diffing this symbol during the
+    /// ``Terminal::flush`` operation
+    pub trusted_width: Option<usize>,
 }
 
 impl Cell {
@@ -52,6 +58,7 @@ impl Cell {
             underline_color: Color::Reset,
             modifier: Modifier::empty(),
             skip: false,
+            trusted_width: None
         }
     }
 
@@ -140,6 +147,13 @@ impl Cell {
         }
         self.modifier = Modifier::empty();
         self.skip = false;
+    }
+
+    /// Get the 'display' width of this string. This should be equal to ``self.symbol().width()``, but
+    /// first checks to see if `trusted_width` is set before computing the unicode width of the
+    /// symbol, as a performance optimization
+    pub fn display_width(&self) -> usize {
+        self.trusted_width.unwrap_or_else(|| self.symbol().width())
     }
 }
 

@@ -73,6 +73,9 @@ where
     last_known_cursor_pos: (u16, u16),
     /// Number of frames rendered up until current time.
     frame_count: usize,
+    /// Whether or not to skip the diffing process and just write the whole buffer to the current
+    /// screen (while still respecting cells that set `skip` to be true)
+    skip_diff: bool
 }
 
 /// Options to pass to [`Terminal::with_options`]
@@ -152,6 +155,7 @@ where
             last_known_size: size,
             last_known_cursor_pos: cursor_pos,
             frame_count: 0,
+            skip_diff: false
         })
     }
 
@@ -186,7 +190,19 @@ where
     pub fn flush(&mut self) -> io::Result<()> {
         let previous_buffer = &self.buffers[1 - self.current];
         let current_buffer = &self.buffers[self.current];
-        let updates = previous_buffer.diff(current_buffer);
+        let updates = if self.skip_diff {
+            current_buffer.content
+                .iter()
+                .enumerate()
+                .filter(|(_, cell)| !cell.skip)
+                .map(|(idx, cell)| {
+                    let pos = previous_buffer.pos_of(idx);
+                    (pos.0, pos.1, cell)
+                })
+                .collect()
+        } else {
+            previous_buffer.diff(current_buffer)
+        };
         if let Some((col, row, _)) = updates.last() {
             self.last_known_cursor_pos = (*col, *row);
         }
@@ -327,6 +343,12 @@ where
         self.backend.set_cursor(x, y)?;
         self.last_known_cursor_pos = (x, y);
         Ok(())
+    }
+
+    /// If set to true, the buffer diffing process will be bypassed to just write all changes
+    /// (except those which have been marked 'skip') to the screen on each re-render
+    pub fn skip_diff(&mut self, skip_diff: bool) {
+        self.skip_diff = skip_diff;
     }
 
     /// Clear the terminal and force a full redraw on the next draw call.

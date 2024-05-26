@@ -360,12 +360,13 @@ impl Buffer {
         for (i, (current, previous)) in next_buffer.iter().zip(previous_buffer.iter()).enumerate() {
             if !current.skip && (current != previous || invalidated > 0) && to_skip == 0 {
                 let (x, y) = self.pos_of(i);
-                updates.push((x, y, &next_buffer[i]));
+                updates.push((x, y, current));
             }
 
-            to_skip = current.symbol().width().saturating_sub(1);
+            let cur_width = current.display_width();
+            to_skip = cur_width.saturating_sub(1);
 
-            let affected_width = std::cmp::max(current.symbol().width(), previous.symbol().width());
+            let affected_width = std::cmp::max(cur_width, previous.display_width());
             invalidated = std::cmp::max(affected_width, invalidated).saturating_sub(1);
         }
         updates
