@@ -188,6 +188,7 @@ mod tests {
                 underline_color: Color::Reset,
                 modifier: Modifier::empty(),
                 skip: false,
+                trusted_width: None
             }
         );
     }
