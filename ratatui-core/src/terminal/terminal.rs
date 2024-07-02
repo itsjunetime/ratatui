@@ -77,6 +77,8 @@ where
     last_known_cursor_pos: Position,
     /// Number of frames rendered up until current time.
     frame_count: usize,
+    /// Whether to skip diffing when re-rendering the terminal and just write it all anyways
+    skip_diff: bool
 }
 
 /// Options to pass to [`Terminal::with_options`]
@@ -164,6 +166,7 @@ where
             last_known_area: area,
             last_known_cursor_pos: cursor_pos,
             frame_count: 0,
+            skip_diff: false
         })
     }
 
@@ -196,9 +199,20 @@ where
     /// Obtains a difference between the previous and the current buffer and passes it to the
     /// current backend for drawing.
     pub fn flush(&mut self) -> io::Result<()> {
-        let previous_buffer = &self.buffers[1 - self.current];
         let current_buffer = &self.buffers[self.current];
-        let updates = previous_buffer.diff(current_buffer);
+        let updates = if self.skip_diff {
+            current_buffer.content()
+                .iter()
+                .enumerate()
+                .map(|(i, cell)| {
+                    let (x, y) = current_buffer.pos_of(i);
+                    (x, y, cell)
+                })
+                .collect()
+        } else {
+            let previous_buffer = &self.buffers[1 - self.current];
+            previous_buffer.diff(current_buffer)
+        };
         if let Some((col, row, _)) = updates.last() {
             self.last_known_cursor_pos = Position { x: *col, y: *row };
         }
@@ -818,6 +832,12 @@ where
             self.backend.append_lines(lines_to_scroll)?;
         }
         Ok(())
+    }
+
+	/// Whether or not to skip diffing each buffer against the previous one - can improve
+	/// performance in situations where diffing takes more time than writing to the backend
+    pub fn skip_diff(&mut self, skip_diff: bool) {
+        self.skip_diff = skip_diff;
     }
 }
 
