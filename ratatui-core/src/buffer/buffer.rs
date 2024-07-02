@@ -292,7 +292,7 @@ impl Buffer {
     ///
     /// # Panics
     ///
-    /// Panics when given an index that is outside the Buffer's content.
+    /// Panics when given an index that is outside the Buffer's content (on debug)
     ///
     /// ```should_panic
     /// use ratatui_core::{buffer::Buffer, layout::Rect};
@@ -749,6 +749,7 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "outside the buffer")]
+	#[cfg(debug_assertions)]
     fn pos_of_panics_on_out_of_bounds() {
         let rect = Rect::new(0, 0, 10, 10);
         let buf = Buffer::empty(rect);
