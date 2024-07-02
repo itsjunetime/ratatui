@@ -360,12 +360,13 @@ impl Buffer {
         for (i, (current, previous)) in next_buffer.iter().zip(previous_buffer.iter()).enumerate() {
             if !current.skip && (current != previous || invalidated > 0) && to_skip == 0 {
                 let (x, y) = self.pos_of(i);
-                updates.push((x, y, &next_buffer[i]));
+                updates.push((x, y, current));
             }
 
-            to_skip = current.symbol().width().saturating_sub(1);
+            let curr_width = current.display_width();
+            to_skip = curr_width.saturating_sub(1);
 
-            let affected_width = std::cmp::max(current.symbol().width(), previous.symbol().width());
+            let affected_width = std::cmp::max(curr_width, previous.symbol().width());
             invalidated = std::cmp::max(affected_width, invalidated).saturating_sub(1);
         }
         updates
@@ -548,7 +549,7 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "outside the buffer")]
-	#[cfg(debug_assertions)]
+    #[cfg(debug_assertions)]
     fn pos_of_panics_on_out_of_bounds() {
         let rect = Rect::new(0, 0, 10, 10);
         let buf = Buffer::empty(rect);
@@ -559,7 +560,7 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "outside the buffer")]
-	#[cfg(debug_assertions)]
+    #[cfg(debug_assertions)]
     fn index_of_panics_on_out_of_bounds() {
         let rect = Rect::new(0, 0, 10, 10);
         let buf = Buffer::empty(rect);
