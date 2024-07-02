@@ -32,6 +32,9 @@ pub struct Cell {
 
     /// Whether the cell should be skipped when copying (diffing) the buffer to the screen.
     pub skip: bool,
+
+    /// The known display width of the cell
+    pub trusted_width: Option<usize>,
 }
 
 impl Cell {
@@ -44,6 +47,7 @@ impl Cell {
         underline_color: Color::Reset,
         modifier: Modifier::empty(),
         skip: false,
+        trusted_width: None
     };
 
     /// Creates a new `Cell` with the given symbol.
@@ -193,6 +197,12 @@ impl Cell {
     pub fn reset(&mut self) {
         *self = Self::EMPTY;
     }
+
+    /// How many terminal columns this cell will take up when written to a terminal
+    pub(crate) fn display_width(&self) -> usize {
+        use unicode_width::UnicodeWidthStr;
+        self.trusted_width.unwrap_or_else(|| self.symbol().width())
+    }
 }
 
 impl PartialEq for Cell {
@@ -262,6 +272,7 @@ mod tests {
                 underline_color: Color::Reset,
                 modifier: Modifier::empty(),
                 skip: false,
+                trusted_width: None
             }
         );
     }
