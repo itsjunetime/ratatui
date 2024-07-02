@@ -537,7 +537,8 @@ impl Buffer {
                 }
             }
 
-            to_skip = current.symbol().width().saturating_sub(1);
+            let curr_width = current.display_width();
+            to_skip = curr_width.saturating_sub(1);
 
             let affected_width = cmp::max(current.symbol().width(), previous.symbol().width());
             invalidated = cmp::max(affected_width, invalidated).saturating_sub(1);
@@ -784,7 +785,7 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "outside the buffer")]
-	#[cfg(debug_assertions)]
+    #[cfg(debug_assertions)]
     fn pos_of_panics_on_out_of_bounds() {
         let rect = Rect::new(0, 0, 10, 10);
         let buf = Buffer::empty(rect);
