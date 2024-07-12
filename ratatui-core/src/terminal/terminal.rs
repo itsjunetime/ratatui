@@ -78,7 +78,7 @@ where
     /// Number of frames rendered up until current time.
     frame_count: usize,
     /// Whether to skip diffing when re-rendering the terminal and just write it all anyways
-    skip_diff: bool
+    skip_diff: bool,
 }
 
 /// Options to pass to [`Terminal::with_options`]
@@ -166,7 +166,7 @@ where
             last_known_area: area,
             last_known_cursor_pos: cursor_pos,
             frame_count: 0,
-            skip_diff: false
+            skip_diff: false,
         })
     }
 
@@ -201,9 +201,11 @@ where
     pub fn flush(&mut self) -> io::Result<()> {
         let current_buffer = &self.buffers[self.current];
         let updates = if self.skip_diff {
-            current_buffer.content()
+            current_buffer
+                .content()
                 .iter()
                 .enumerate()
+                .filter(|(_, cell)| !cell.skip)
                 .map(|(i, cell)| {
                     let (x, y) = current_buffer.pos_of(i);
                     (x, y, cell)
@@ -834,8 +836,8 @@ where
         Ok(())
     }
 
-	/// Whether or not to skip diffing each buffer against the previous one - can improve
-	/// performance in situations where diffing takes more time than writing to the backend
+    /// Whether or not to skip diffing each buffer against the previous one - can improve
+    /// performance in situations where diffing takes more time than writing to the backend
     pub fn skip_diff(&mut self, skip_diff: bool) {
         self.skip_diff = skip_diff;
     }

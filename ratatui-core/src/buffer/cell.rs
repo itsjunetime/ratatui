@@ -55,7 +55,7 @@ impl Cell {
             underline_color: Color::Reset,
             modifier: Modifier::empty(),
             skip: false,
-            trusted_width: None
+            trusted_width: None,
         }
     }
 
