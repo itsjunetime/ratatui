@@ -873,7 +873,7 @@ where
 
     /// Whether or not to skip diffing each buffer against the previous one - can improve
     /// performance in situations where diffing takes more time than writing to the backend
-    pub fn skip_diff(&mut self, skip_diff: bool) {
+    pub const fn skip_diff(&mut self, skip_diff: bool) {
         self.skip_diff = skip_diff;
     }
 }
