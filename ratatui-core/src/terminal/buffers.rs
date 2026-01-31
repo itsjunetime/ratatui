@@ -73,9 +73,22 @@ impl<B: Backend> Terminal<B> {
     ///
     /// [`Backend::flush`]: crate::backend::Backend::flush
     pub fn flush(&mut self) -> Result<(), B::Error> {
-        let previous_buffer = &self.buffers[1 - self.current];
         let current_buffer = &self.buffers[self.current];
-        let updates = previous_buffer.diff(current_buffer);
+        let updates = if self.skip_diff {
+            current_buffer
+                .content()
+                .iter()
+                .enumerate()
+                .filter(|(_, cell)| !cell.skip)
+                .map(|(i, cell)| {
+                    let (x, y) = current_buffer.pos_of(i);
+                    (x, y, cell)
+                })
+                .collect()
+        } else {
+            let previous_buffer = &self.buffers[1 - self.current];
+            previous_buffer.diff(current_buffer)
+        };
         if let Some((col, row, _)) = updates.last() {
             self.last_known_cursor_pos = Position { x: *col, y: *row };
         }
@@ -171,6 +184,12 @@ impl<B: Backend> Terminal<B> {
         let updates = area.positions().map(|pos| (pos.x, pos.y, &clear_cell));
         self.backend.draw(updates)?;
         Ok(())
+    }
+
+    /// Whether or not to skip diffing each buffer against the previous one - can improve
+    /// performance in situations where diffing takes more time than writing to the backend
+    pub const fn skip_diff(&mut self, skip_diff: bool) {
+        self.skip_diff = skip_diff;
     }
 }
 
