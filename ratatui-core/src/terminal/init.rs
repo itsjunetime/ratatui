@@ -132,6 +132,7 @@ impl<B: Backend> Terminal<B> {
             last_known_area: area,
             last_known_cursor_pos: cursor_pos,
             frame_count: 0,
+            skip_diff: false
         })
     }
 }

@@ -379,6 +379,8 @@ where
     /// This increments after each successful [`Terminal::draw`] / [`Terminal::try_draw`] and wraps
     /// at `usize::MAX`.
     frame_count: usize,
+    /// Whether to skip diffing when re-rendering the terminal and just write it all anyways
+    skip_diff: bool,
 }
 
 /// Options to pass to [`Terminal::with_options`]
